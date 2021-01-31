@@ -653,15 +653,20 @@ public class DefaultResultSetHandler implements ResultSetHandler {
   //
 
   private Object createResultObject(ResultSetWrapper rsw, ResultMap resultMap, ResultLoaderMap lazyLoader, String columnPrefix) throws SQLException {
+    //表示是否使用构造方法创建结果对象,此处将其重置
     this.useConstructorMappings = false; // reset previous mapping result
     final List<Class<?>> constructorArgTypes = new ArrayList<>();
     final List<Object> constructorArgs = new ArrayList<>();
+    //创建映射后的结果对象
     Object resultObject = createResultObject(rsw, resultMap, constructorArgTypes, constructorArgs, columnPrefix);
     if (resultObject != null && !hasTypeHandlerForResultObject(rsw, resultMap.getType())) {
+      //如果有内嵌的查询,并且开启延迟加载,则创建结果对象的代理对象
       final List<ResultMapping> propertyMappings = resultMap.getPropertyResultMappings();
       for (ResultMapping propertyMapping : propertyMappings) {
         // issue gcode #109 && issue #149
+        //判断有没有设置延迟加载
         if (propertyMapping.getNestedQueryId() != null && propertyMapping.isLazy()) {
+          //创建代理对象
           resultObject = configuration.getProxyFactory().createProxy(resultObject, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
           break;
         }

@@ -114,6 +114,7 @@ public class TransactionalCache implements Cache {
         }
         //将entriesToAddOnCommit和entriesMissedInCache刷入到二级缓存中
         flushPendingEntries();
+        //重置
         reset();
     }
 

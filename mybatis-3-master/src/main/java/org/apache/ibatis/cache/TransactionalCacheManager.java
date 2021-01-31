@@ -30,6 +30,10 @@ public class TransactionalCacheManager {
    */
   private final Map<Cache, TransactionalCache> transactionalCaches = new HashMap<>();
 
+  /**
+   * 清空二级缓存
+   * @param cache
+   */
   public void clear(Cache cache) {
     getTransactionalCache(cache).clear();
   }

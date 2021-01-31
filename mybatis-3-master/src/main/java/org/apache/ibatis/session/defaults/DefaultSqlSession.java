@@ -223,11 +223,18 @@ public class DefaultSqlSession implements SqlSession {
     return update(statement, null);
   }
 
+  /**
+   * 执行更新操作
+   * @param statement Unique identifier matching the statement to execute.
+   * @param parameter A parameter object to pass to the statement.
+   * @return
+   */
   @Override
   public int update(String statement, Object parameter) {
     try {
       dirty = true;
       MappedStatement ms = configuration.getMappedStatement(statement);
+      //调用executor的update操作
       return executor.update(ms, wrapCollection(parameter));
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error updating database.  Cause: " + e, e);

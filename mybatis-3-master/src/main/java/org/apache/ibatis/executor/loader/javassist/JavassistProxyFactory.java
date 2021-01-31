@@ -84,10 +84,12 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
     Class<?>[] typesArray = constructorArgTypes.toArray(new Class[constructorArgTypes.size()]);
     Object[] valuesArray = constructorArgs.toArray(new Object[constructorArgs.size()]);
     try {
+      //创建代理对象
       enhanced = enhancer.create(typesArray, valuesArray);
     } catch (Exception e) {
       throw new ExecutorException("Error creating lazy proxy.  Cause: " + e, e);
     }
+    //设置代理对象的执行器
     ((Proxy) enhanced).setHandler(callback);
     return enhanced;
   }
@@ -114,8 +116,11 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
 
     public static Object createProxy(Object target, ResultLoaderMap lazyLoader, Configuration configuration, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
       final Class<?> type = target.getClass();
+      //创建EnhancedResultObjectProxyImpl
       EnhancedResultObjectProxyImpl callback = new EnhancedResultObjectProxyImpl(type, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
+      //创建代理对象
       Object enhanced = crateProxy(type, callback, constructorArgTypes, constructorArgs);
+     //将target的属性,复制到enhanced中
       PropertyCopier.copyBeanProperties(type, target, enhanced);
       return enhanced;
     }
@@ -125,6 +130,7 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
       final String methodName = method.getName();
       try {
         synchronized (lazyLoader) {
+          //与序列化相关
           if (WRITE_REPLACE_METHOD.equals(methodName)) {
             Object original;
             if (constructorArgTypes.isEmpty()) {
@@ -140,20 +146,27 @@ public class JavassistProxyFactory implements org.apache.ibatis.executor.loader.
             }
           } else {
             if (lazyLoader.size() > 0 && !FINALIZE_METHOD.equals(methodName)) {
+              //加载所有延迟加载的属性aggressive为true需要加载全部的属性,如果为false不用
               if (aggressive || lazyLoadTriggerMethods.contains(methodName)) {
                 lazyLoader.loadAll();
+                //如果调用了Setting方法,则不再使用延迟加载
               } else if (PropertyNamer.isSetter(methodName)) {
                 final String property = PropertyNamer.methodToProperty(methodName);
                 lazyLoader.remove(property);
+                //如果调用的是get方法,则执行延迟加载
               } else if (PropertyNamer.isGetter(methodName)) {
+                //获取具体属性
                 final String property = PropertyNamer.methodToProperty(methodName);
+                //判断这个属性是不是需要延迟加载
                 if (lazyLoader.hasLoader(property)) {
+                  //进行加载,只要加载一次就会从延迟加载中的map中移除,之后就不会再触发了
                   lazyLoader.load(property);
                 }
               }
             }
           }
         }
+        //执行原方法
         return methodProxy.invoke(enhanced, args);
       } catch (Throwable t) {
         throw ExceptionUtil.unwrapThrowable(t);

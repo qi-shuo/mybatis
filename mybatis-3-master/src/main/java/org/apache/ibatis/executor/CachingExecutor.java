@@ -70,8 +70,16 @@ public class CachingExecutor implements Executor {
     return delegate.isClosed();
   }
 
+  /**
+   * executor的更新操作
+   * @param ms
+   * @param parameterObject
+   * @return
+   * @throws SQLException
+   */
   @Override
   public int update(MappedStatement ms, Object parameterObject) throws SQLException {
+    //是否清空缓存
     flushCacheIfRequired(ms);
     return delegate.update(ms, parameterObject);
   }
@@ -184,8 +192,12 @@ public class CachingExecutor implements Executor {
   }
 
   private void flushCacheIfRequired(MappedStatement ms) {
+    //拿到cache对象
     Cache cache = ms.getCache();
+    //flushCacheRequired 这个变量,select默认是false也就是不刷新缓存
+    //insert,update,delete默认是true就是刷新缓存
     if (cache != null && ms.isFlushCacheRequired()) {
+      //清空二级缓存
       tcm.clear(cache);
     }
   }
